@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        background-color: #f8f8f8;
+        font-family: monospace;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 20px;
+      }
+      .container {
+        display: flex;
+        gap: 40px;
+      }
+      .receipt {
+        width: 300px;
+        padding: 20px;
+        background: white;
+        border: 1px solid #ddd;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        font-size: 12px;
+      }
+      .header,
+      .address,
+      .timestamp {
+        text-align: center;
+        margin: 5px 0;
+      }
+      .items,
+      .totals,
+      .payment-info {
+        margin: 10px 0;
+      }
+      .items table,
+      .totals table {
+        width: 100%;
+      }
+      table td {
+        padding: 4px 0;
+      }
+      .items td:last-child,
+      .totals td:last-child {
+        text-align: right;
+      }
+      .payment-info p {
+        margin: 3px 0;
+      }
+      .inputs {
+        max-width: 300px;
+        font-size: 12px;
+      }
+      .inputs label {
+        display: block;
+        margin: 10px 0 5px;
+      }
+    </style>
+    <title>Live Receipt Update</title>
+  </head>
+  <body>
+    <div class="container">
+      <div class="receipt" id="receipt">
+        <p class="header">Welcome to<br />Rocket Fuel Station</p>
+        <p class="address">
+          3425 Sky St, Phoenix, AZ 85004<br />Phone: (602) 555-1234
+        </p>
+
+        <div class="items">
+          <table id="items-table"></table>
+        </div>
+
+        <div class="totals">
+          <table>
+            <tr>
+              <td>Subtotal</td>
+              <td id="subtotal">$0.00</td>
+            </tr>
+            <tr>
+              <td>Tax</td>
+              <td id="tax">$0.00</td>
+            </tr>
+            <tr>
+              <td>Total</td>
+              <td id="total">$0.00</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="payment-info">
+          <p>Card Type: <span id="card-type">DEBIT</span></p>
+          <p>AUTH TIME: <span id="auth-time">070404</span></p>
+          <p>ACCT NUMBER: <span id="acct-number">2336</span></p>
+          <p>TRANS TYPE: <span id="trans-type">SALE</span></p>
+          <p>Terminal Seq Num: <span id="terminal-seq-num">000000</span></p>
+        </div>
+
+        <div class="extra-info">
+          <p>Network Name: MASTERO</p>
+          <p>PIN USED</p>
+        </div>
+
+        <p class="timestamp" id="timestamp">9/11/24 7:04:10 AM</p>
+      </div>
+
+      <div class="inputs">
+        <h3>Update Receipt</h3>
+
+        <label for="monster-name">Rename Item</label>
+        <input
+          type="text"
+          id="monster-name"
+          value="T MONSTER ULT PCH"
+          oninput="updateReceipt()"
+        />
+
+        <label for="monster-price">Item Price</label>
+        <input
+          type="number"
+          id="monster-price"
+          value="2.99"
+          step="0.01"
+          oninput="updateReceipt()"
+        />
+
+        <label for="monster-qty">Item Quantity (Min - Max)</label>
+        <input
+          type="number"
+          id="monster-qty-min"
+          value="1"
+          step="1"
+          oninput="updateReceipt()"
+        />
+        -
+        <input
+          type="number"
+          id="monster-qty-max"
+          value="5"
+          step="1"
+          oninput="updateReceipt()"
+        />
+
+        <label for="tax">Tax Rate (%)</label>
+        <input
+          type="number"
+          id="tax-input"
+          value="5"
+          step="0.01"
+          oninput="updateReceipt()"
+        />
+
+        <label for="min-date">Min Date</label>
+        <input
+          type="datetime-local"
+          id="min-date"
+          value="2024-09-01T09:00"
+          oninput="updateReceipt()"
+        />
+
+        <label for="max-date">Max Date</label>
+        <input
+          type="datetime-local"
+          id="max-date"
+          value="2024-09-10T21:00"
+          oninput="updateReceipt()"
+        />
+
+        <button onclick="randomizeReceipt()">Randomize Receipt</button>
+      </div>
+    </div>
+
+    <script>
+      // Initial JSON data
+      const receiptData = {
+        items: [{ name: "T MONSTER ULT PCH", qty: 1, price: 2.99 }],
+        taxRate: 5, // percentage tax rate
+        cardType: "DEBIT",
+        authTime: "070404",
+        acctNumber: "2336",
+        transType: "SALE",
+        terminalSeqNum: "000000",
+        timestamp: "9/11/24 7:04:10 AM",
+      };
+
+      // Function to get a random date between minDate and maxDate
+      function getRandomDate(minDate, maxDate) {
+        const minTime = new Date(minDate).getTime();
+        const maxTime = new Date(maxDate).getTime();
+        const randomTime = new Date(
+          minTime + Math.random() * (maxTime - minTime)
+        );
+
+        return randomTime.toLocaleString("en-US", {
+          month: "numeric",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+          hour12: true,
+        });
+      }
+
+      // Function to generate random auth time, account number, and terminal sequence number
+      function generateRandomAuthTime() {
+        const hours = Math.floor(Math.random() * 24)
+          .toString()
+          .padStart(2, "0");
+        const minutes = Math.floor(Math.random() * 60)
+          .toString()
+          .padStart(2, "0");
+        const seconds = Math.floor(Math.random() * 60)
+          .toString()
+          .padStart(2, "0");
+        return `${hours}${minutes}${seconds}`;
+      }
+
+      function generateRandomAcctNumber() {
+        return Math.floor(1000 + Math.random() * 9000); // Generates a random 4-digit number
+      }
+
+      function generateRandomTerminalSeqNum() {
+        return Math.floor(100000 + Math.random() * 900000).toString(); // Generates a random 6-digit number
+      }
+
+      function getRandomQuantity(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      // Function to update the receipt dynamically
+      function updateReceipt() {
+        // Get the updated values from inputs
+        const name = document.getElementById("monster-name").value;
+        const price = parseFloat(
+          document.getElementById("monster-price").value
+        );
+        const qtyMin = parseInt(
+          document.getElementById("monster-qty-min").value
+        );
+        const qtyMax = parseInt(
+          document.getElementById("monster-qty-max").value
+        );
+        const taxRate = parseFloat(document.getElementById("tax-input").value);
+        const minDate = document.getElementById("min-date").value;
+        const maxDate = document.getElementById("max-date").value;
+
+        receiptData.items[0].name = name;
+        receiptData.items[0].price = price;
+        receiptData.items[0].qty = getRandomQuantity(qtyMin, qtyMax);
+        receiptData.taxRate = taxRate;
+
+        // Calculate subtotal and total
+        const subtotal = receiptData.items[0].price * receiptData.items[0].qty;
+        const tax = (subtotal * receiptData.taxRate) / 100;
+        const total = subtotal + tax;
+
+        // Generate random date, auth time, and terminal sequence number
+        receiptData.authTime = generateRandomAuthTime();
+        receiptData.acctNumber = generateRandomAcctNumber();
+        receiptData.terminalSeqNum = generateRandomTerminalSeqNum();
+        receiptData.timestamp = getRandomDate(minDate, maxDate);
+
+        // Update receipt HTML
+        document.getElementById("items-table").innerHTML = `
+                <tr><td>${receiptData.items[0].name}</td><td>${
+          receiptData.items[0].qty
+        }</td><td>$${price.toFixed(2)}</td></tr>
+            `;
+        document.getElementById("subtotal").innerText = `$${subtotal.toFixed(
+          2
+        )}`;
+        document.getElementById("tax").innerText = `$${tax.toFixed(2)}`;
+        document.getElementById("total").innerText = `$${total.toFixed(2)}`;
+        document.getElementById("auth-time").innerText = receiptData.authTime;
+        document.getElementById("acct-number").innerText =
+          receiptData.acctNumber;
+        document.getElementById("terminal-seq-num").innerText =
+          receiptData.terminalSeqNum;
+        document.getElementById("timestamp").innerText = receiptData.timestamp;
+      }
+
+      // Function to randomize receipt with one button click
+      function randomizeReceipt() {
+        updateReceipt();
+      }
+
+      // Initialize the receipt display on page load
+      updateReceipt();
+    </script>
+  </body>
+</html>
