@@ -85,9 +85,11 @@
             <label for="monster-price">Item Price</label>
             <input type="number" id="monster-price" value="2.99" step="0.01" oninput="updateReceipt()">
             
-            <label for="monster-qty">Item Quantity (Min - Max)</label>
-            <input type="number" id="monster-qty-min" value="1" step="1" oninput="updateReceipt()"> -
-            <input type="number" id="monster-qty-max" value="5" step="1" oninput="updateReceipt()">
+            <label for="monster-qty">Item Quantity</label>
+            <input type="number" id="monster-qty" value="1" step="1" oninput="updateReceipt()">
+            
+            <label for="lines">Number of Lines</label>
+            <input type="number" id="lines" value="3" step="1" min="1" oninput="updateReceipt()">
 
             <label for="tax">Tax Rate (%)</label>
             <input type="number" id="tax-input" value="5" step="0.01" oninput="updateReceipt()">
@@ -149,28 +151,24 @@
             return Math.floor(100000 + Math.random() * 900000).toString(); // Generates a random 6-digit number
         }
 
-        function getRandomQuantity(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
-
         // Function to create a single receipt dynamically
         function createReceipt() {
             // Get the updated values from inputs
             const name = document.getElementById('monster-name').value;
             const price = parseFloat(document.getElementById('monster-price').value);
-            const qtyMin = parseInt(document.getElementById('monster-qty-min').value);
-            const qtyMax = parseInt(document.getElementById('monster-qty-max').value);
+            const quantity = parseInt(document.getElementById('monster-qty').value);
+            const lines = parseInt(document.getElementById('lines').value);
             const taxRate = parseFloat(document.getElementById('tax-input').value);
             const minDate = document.getElementById('min-date').value;
             const maxDate = document.getElementById('max-date').value;
 
             receiptData.items[0].name = name;
             receiptData.items[0].price = price;
-            receiptData.items[0].qty = getRandomQuantity(qtyMin, qtyMax);
+            receiptData.items[0].qty = quantity;
             receiptData.taxRate = taxRate;
 
             // Calculate subtotal and total
-            const subtotal = receiptData.items[0].price * receiptData.items[0].qty;
+            const subtotal = receiptData.items[0].price * receiptData.items[0].qty * lines;
             const tax = (subtotal * receiptData.taxRate) / 100;
             const total = subtotal + tax;
 
@@ -181,6 +179,11 @@
             receiptData.timestamp = getRandomDate(minDate, maxDate);
 
             // Create the receipt HTML
+            let itemLines = '';
+            for (let i = 0; i < lines; i++) {
+                itemLines += `<tr><td>${receiptData.items[0].name}</td><td>${receiptData.items[0].qty}</td><td>$${price.toFixed(2)}</td></tr>`;
+            }
+
             return `
                 <div class="receipt">
                     <p class="header">Welcome to<br>Luke Fuel Station</p>
@@ -195,7 +198,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td>${receiptData.items[0].name}</td><td>${receiptData.items[0].qty}</td><td>$${price.toFixed(2)}</td></tr>
+                                ${itemLines}
                             </tbody>
                         </table>
                     </div>
